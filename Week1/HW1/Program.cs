@@ -4,15 +4,15 @@ class Program
 {
     static void Main(string[] args)
     {
-        (bool ok, int value, string err) GetNumber()
+        (bool ok, double value, string err) GetNum()
         {
             string input = Console.ReadLine();
-            return int.TryParse(input, out int parsedValue)
+            return double.TryParse(input, out double parsedValue)
                 ? (true, parsedValue, null) 
                 : (false, 0, $"Invalid input: \"{input}\"");
         }
         
-        (bool ok, char op, string error) GetOperator()
+        (bool ok, char op, string error) GetOper()
         {
             string input = Console.ReadLine();
             return (input.Length == 1 && "+-*/".Contains(input))
@@ -23,15 +23,15 @@ class Program
         while (true)
         {
             Console.WriteLine("First number: ");
-            var (ok1, val1, err1) = GetNumber();
+            var (ok1, val1, err1) = GetNum();
             if (!ok1) { Console.WriteLine(err1); continue; }
 
             Console.WriteLine("Operator (+, -, *, /): ");
-            var (okOp, oper, opError) = GetOperator();
+            var (okOp, oper, opError) = GetOper();
             if (!okOp) { Console.WriteLine(opError); continue; }
 
             Console.WriteLine("Second number:");
-            var (ok2, val2, err2) = GetNumber();
+            var (ok2, val2, err2) = GetNum();
             if (!ok2) { Console.WriteLine(err2); continue; }
 
             if (oper == '/' && val2 == 0)
@@ -40,13 +40,23 @@ class Program
                 continue;
             }
 
-            int result = 0;
+            double result = 0;
             switch (oper)
             {
                 case '+': result = val1 + val2; break;
                 case '-': result = val1 - val2; break;
                 case '*': result = val1 * val2; break;
-                case '/': result = val1 / val2; break;
+                case '/':
+                    if (val2 == 0)
+                    {
+                        Console.WriteLine("Cannot divide by 0. -_-\n");
+                        continue;
+                    }
+                    result = (double)val1 / val2;
+                    break;
+                default:
+                    Console.WriteLine($"Unknown operator: {oper}");
+                    continue;
             }
 
             Console.WriteLine($"{val1} {oper} {val2} = {result}");
