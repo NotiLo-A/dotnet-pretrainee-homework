@@ -1,103 +1,77 @@
-using Microsoft.AspNetCore.Mvc;
-using HW4.Models;
 using HW4.Data;
+using HW4.Models;
+using Microsoft.AspNetCore.Mvc;
 
-namespace HW4.Controllers
+namespace HW4.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class BooksController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class BooksController : ControllerBase
+    [HttpGet]
+    public ActionResult<IEnumerable<Book>> GetBooks()
     {
-        [HttpGet]
-        public ActionResult<IEnumerable<Book>> GetBooks()
-        {
-            return Ok(LibraryStorage.Books);
-        }
+        return Ok(LibraryStorage.Books);
+    }
 
-        [HttpGet("{id}")]
-        public ActionResult<Book> GetBook(int id)
-        {
-            var book = LibraryStorage.Books.FirstOrDefault(b => b.Id == id);
-            
-            if (book == null)
-            {
-                return NotFound(new { message = $"Book with ID {id} not found" });
-            }
+    [HttpGet("{id}")]
+    public ActionResult<Book> GetBook(int id)
+    {
+        var book = LibraryStorage.Books.FirstOrDefault(b => b.Id == id);
 
-            return Ok(book);
-        }
+        if (book == null) return NotFound(new { message = $"Book with ID {id} not found" });
 
-        [HttpPost]
-        public ActionResult<Book> CreateBook(Book book)
-        {
-            if (string.IsNullOrWhiteSpace(book.Title))
-            {
-                return BadRequest(new { message = "Book title is required" });
-            }
+        return Ok(book);
+    }
 
-            if (book.PublishedYear < 1000 || book.PublishedYear > DateTime.Now.Year)
-            {
-                return BadRequest(new { message = "Invalid publication year" });
-            }
+    [HttpPost]
+    public ActionResult<Book> CreateBook(Book book)
+    {
+        if (string.IsNullOrWhiteSpace(book.Title)) return BadRequest(new { message = "Book title is required" });
 
-            var authorExists = LibraryStorage.Authors.Any(a => a.Id == book.AuthorId);
-            if (!authorExists)
-            {
-                return BadRequest(new { message = $"Author with ID {book.AuthorId} not found" });
-            }
+        if (book.PublishedYear < 1000 || book.PublishedYear > DateTime.Now.Year)
+            return BadRequest(new { message = "Invalid publication year" });
 
-            book.Id = LibraryStorage.GetNextBookId();
-            LibraryStorage.Books.Add(book);
+        var authorExists = LibraryStorage.Authors.Any(a => a.Id == book.AuthorId);
+        if (!authorExists) return BadRequest(new { message = $"Author with ID {book.AuthorId} not found" });
 
-            return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
-        }
+        book.Id = LibraryStorage.GetNextBookId();
+        LibraryStorage.Books.Add(book);
 
-        [HttpPut("{id}")]
-        public IActionResult UpdateBook(int id, Book book)
-        {
-            var existingBook = LibraryStorage.Books.FirstOrDefault(b => b.Id == id);
-            
-            if (existingBook == null)
-            {
-                return NotFound(new { message = $"Book with ID {id} not found" });
-            }
+        return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
+    }
 
-            if (string.IsNullOrWhiteSpace(book.Title))
-            {
-                return BadRequest(new { message = "Book title is required" });
-            }
+    [HttpPut("{id}")]
+    public IActionResult UpdateBook(int id, Book book)
+    {
+        var existingBook = LibraryStorage.Books.FirstOrDefault(b => b.Id == id);
 
-            if (book.PublishedYear < 1000 || book.PublishedYear > DateTime.Now.Year)
-            {
-                return BadRequest(new { message = "Invalid publication year" });
-            }
+        if (existingBook == null) return NotFound(new { message = $"Book with ID {id} not found" });
 
-            var authorExists = LibraryStorage.Authors.Any(a => a.Id == book.AuthorId);
-            if (!authorExists)
-            {
-                return BadRequest(new { message = $"Author with ID {book.AuthorId} not found" });
-            }
+        if (string.IsNullOrWhiteSpace(book.Title)) return BadRequest(new { message = "Book title is required" });
 
-            existingBook.Title = book.Title;
-            existingBook.PublishedYear = book.PublishedYear;
-            existingBook.AuthorId = book.AuthorId;
+        if (book.PublishedYear < 1000 || book.PublishedYear > DateTime.Now.Year)
+            return BadRequest(new { message = "Invalid publication year" });
 
-            return NoContent();
-        }
+        var authorExists = LibraryStorage.Authors.Any(a => a.Id == book.AuthorId);
+        if (!authorExists) return BadRequest(new { message = $"Author with ID {book.AuthorId} not found" });
 
-        [HttpDelete("{id}")]
-        public IActionResult DeleteBook(int id)
-        {
-            var book = LibraryStorage.Books.FirstOrDefault(b => b.Id == id);
-            
-            if (book == null)
-            {
-                return NotFound(new { message = $"Book with ID {id} not found" });
-            }
+        existingBook.Title = book.Title;
+        existingBook.PublishedYear = book.PublishedYear;
+        existingBook.AuthorId = book.AuthorId;
 
-            LibraryStorage.Books.Remove(book);
+        return NoContent();
+    }
 
-            return NoContent();
-        }
+    [HttpDelete("{id}")]
+    public IActionResult DeleteBook(int id)
+    {
+        var book = LibraryStorage.Books.FirstOrDefault(b => b.Id == id);
+
+        if (book == null) return NotFound(new { message = $"Book with ID {id} not found" });
+
+        LibraryStorage.Books.Remove(book);
+
+        return NoContent();
     }
 }
