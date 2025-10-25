@@ -1,5 +1,5 @@
-using HW4.Data;
-using HW4.Models;
+using HW4.DTOs;
+using HW4.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HW4.Controllers;
@@ -8,70 +8,67 @@ namespace HW4.Controllers;
 [ApiController]
 public class BooksController : ControllerBase
 {
-    [HttpGet]
-    public ActionResult<IEnumerable<Book>> GetBooks()
+    private readonly IBookService _bookService;
+
+    public BooksController(IBookService bookService)
     {
-        return Ok(LibraryStorage.Books);
+        _bookService = bookService;
+    }
+
+    [HttpGet]
+    public ActionResult<IEnumerable<BookResponseDto>> GetBooks()
+    {
+        var books = _bookService.GetAll();
+        return Ok(books);
     }
 
     [HttpGet("{id}")]
-    public ActionResult<Book> GetBook(int id)
+    public ActionResult<BookResponseDto> GetBook(int id)
     {
-        var book = LibraryStorage.Books.FirstOrDefault(b => b.Id == id);
-
+        var book = _bookService.GetById(id);
         if (book == null) return NotFound(new { message = $"Book with ID {id} not found" });
-
         return Ok(book);
     }
 
     [HttpPost]
-    public ActionResult<Book> CreateBook(Book book)
+    public ActionResult<BookResponseDto> CreateBook(CreateBookDto dto)
     {
-        if (string.IsNullOrWhiteSpace(book.Title)) return BadRequest(new { message = "Book title is required" });
-
-        if (book.PublishedYear < 1000 || book.PublishedYear > DateTime.Now.Year)
-            return BadRequest(new { message = "Invalid publication year" });
-
-        var authorExists = LibraryStorage.Authors.Any(a => a.Id == book.AuthorId);
-        if (!authorExists) return BadRequest(new { message = $"Author with ID {book.AuthorId} not found" });
-
-        book.Id = LibraryStorage.GetNextBookId();
-        LibraryStorage.Books.Add(book);
-
-        return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
+        try
+        {
+            var book = _bookService.Create(dto);
+            return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id}")]
-    public IActionResult UpdateBook(int id, Book book)
+    public IActionResult UpdateBook(int id, UpdateBookDto dto)
     {
-        var existingBook = LibraryStorage.Books.FirstOrDefault(b => b.Id == id);
-
-        if (existingBook == null) return NotFound(new { message = $"Book with ID {id} not found" });
-
-        if (string.IsNullOrWhiteSpace(book.Title)) return BadRequest(new { message = "Book title is required" });
-
-        if (book.PublishedYear < 1000 || book.PublishedYear > DateTime.Now.Year)
-            return BadRequest(new { message = "Invalid publication year" });
-
-        var authorExists = LibraryStorage.Authors.Any(a => a.Id == book.AuthorId);
-        if (!authorExists) return BadRequest(new { message = $"Author with ID {book.AuthorId} not found" });
-
-        existingBook.Title = book.Title;
-        existingBook.PublishedYear = book.PublishedYear;
-        existingBook.AuthorId = book.AuthorId;
-
-        return NoContent();
+        try
+        {
+            _bookService.Update(id, dto);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]
     public IActionResult DeleteBook(int id)
     {
-        var book = LibraryStorage.Books.FirstOrDefault(b => b.Id == id);
-
-        if (book == null) return NotFound(new { message = $"Book with ID {id} not found" });
-
-        LibraryStorage.Books.Remove(book);
-
-        return NoContent();
+        try
+        {
+            _bookService.Delete(id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 }
