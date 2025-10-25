@@ -26,7 +26,6 @@ public class AuthorsController : ControllerBase
     public ActionResult<AuthorResponseDto> GetAuthor(int id)
     {
         var author = _authorService.GetById(id);
-        if (author == null) return NotFound(new { message = $"Author with ID {id} not found" });
         return Ok(author);
     }
 
@@ -40,32 +39,14 @@ public class AuthorsController : ControllerBase
     [HttpPut("{id}")]
     public IActionResult UpdateAuthor(int id, UpdateAuthorDto dto)
     {
-        try
-        {
-            _authorService.Update(id, dto);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        _authorService.Update(id, dto);
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
     public IActionResult DeleteAuthor(int id)
     {
-        try
-        {
-            _authorService.Delete(id);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        _authorService.Delete(id);
+        return NoContent();
     }
 }

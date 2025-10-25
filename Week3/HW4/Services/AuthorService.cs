@@ -21,12 +21,13 @@ public class AuthorService : IAuthorService
             .Select(a => new AuthorResponseDto(a.Id, a.Name, a.DateOfBirth));
     }
 
-    public AuthorResponseDto? GetById(int id)
+    public AuthorResponseDto GetById(int id)
     {
         var author = _authorRepository.GetById(id);
-        return author == null
-            ? null
-            : new AuthorResponseDto(author.Id, author.Name, author.DateOfBirth);
+
+        if (author == null) throw new KeyNotFoundException($"Author with ID {id} not found");
+
+        return new AuthorResponseDto(author.Id, author.Name, author.DateOfBirth);
     }
 
     public AuthorResponseDto Create(CreateAuthorDto dto)

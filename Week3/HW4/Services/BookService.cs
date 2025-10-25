@@ -21,12 +21,13 @@ public class BookService : IBookService
             .Select(b => new BookResponseDto(b.Id, b.Title, b.PublishedYear, b.AuthorId));
     }
 
-    public BookResponseDto? GetById(int id)
+    public BookResponseDto GetById(int id)
     {
         var book = _bookRepository.GetById(id);
-        return book == null
-            ? null
-            : new BookResponseDto(book.Id, book.Title, book.PublishedYear, book.AuthorId);
+
+        if (book == null) throw new KeyNotFoundException($"Book with ID {id} not found");
+
+        return new BookResponseDto(book.Id, book.Title, book.PublishedYear, book.AuthorId);
     }
 
     public BookResponseDto Create(CreateBookDto dto)
